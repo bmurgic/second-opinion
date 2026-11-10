@@ -1,0 +1,12 @@
+{
+  "name": "second-opinion",
+  "description": "One subagent that reviews a teammate's design on the teammate's git branch, pushes the review beside it, and approves the design when it is ready",
+  "version": "1.0.0",
+  "author": {
+    "name": "Brandon Murgic"
+  },
+  "homepage": "https://github.com/bmurgic/second-opinion",
+  "repository": "https://github.com/bmurgic/second-opinion",
+  "license": "MIT",
+  "keywords": ["design-review", "spec-review", "code-review", "git"]
+}
