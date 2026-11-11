@@ -1,10 +1,11 @@
 # second-opinion
 
-A Claude Code plugin with one subagent, `second-opinion`. It reviews a teammate's design or spec on the teammate's
-git branch, writes the review as a separate file beside it, pushes it, and approves the design when it is ready.
+A Claude Code plugin with two subagents, `second-opinion` and the `researcher` it dispatches. `second-opinion`
+reviews a teammate's design or spec on the teammate's git branch, writes the review as a separate file beside it, pushes it, and approves the design when it is ready.
 
 It never edits the design, never force-pushes, and never posts to chat. It runs no tests, builds, or application
-code. It only reads the code.
+code. It only reads the code. Its `researcher` subagents search the web to learn how fields outside software do
+the same job, and they write nothing.
 
 ## Install
 
@@ -19,11 +20,13 @@ On Claude Code 2.1.275 or later, one command does both:
 /plugin install second-opinion --marketplace bmurgic/second-opinion
 ```
 
-To use the agent without the plugin, copy [`agents/second-opinion.md`](agents/second-opinion.md) into
-`~/.claude/agents/` or a repository's `.claude/agents/`. The file reads nothing else.
+To use the agents without the plugin, copy [`agents/second-opinion.md`](agents/second-opinion.md) and
+[`agents/researcher.md`](agents/researcher.md) into `~/.claude/agents/` or a repository's `.claude/agents/`. The two
+files read nothing else.
 
 The agent runs on Fable at high effort. The `fable` alias means Fable 5.2 on Claude Code 2.1.321 and later, and
-Fable 5.1 before that. Without Fable access, change the `model:` line in the agent file.
+Fable 5.1 before that. Without Fable access, change the `model:` line in the agent file. The `researcher` runs on
+Sonnet at medium effort.
 
 ## Run a review
 
@@ -62,9 +65,14 @@ asks the teammate for it. It doesn't guess.
    - names the outcome one level above the design's goal, and the simplest outcome that would make the decision
      unnecessary.
    - says what the best expert would do differently, and which failure the design invites, such as duplication or
-     two sources of truth.
-   - sets a target ten times harder, such as "the flag is never wrong" instead of "the flag clears".
-   - borrows checks from two or three fields outside software that do the same job.
+     two sources of truth. When the decision changes code, data, infrastructure, or how systems talk to each other,
+     that expert is a senior software engineer. The engineer checks failure, data, change, boundaries, limits, and
+     operations, and gives a verdict: holds up, holds up if, or doesn't hold up.
+   - sets a target ten times harder, such as "the flag is never wrong" instead of "the flag clears". It names the
+     trade-off that blocks the target, as "X versus Y", and looks for a pattern that removes it.
+   - borrows checks from two or three fields outside software that do the same job. It dispatches one
+     `researcher` per field, all at once. Each one reads the field's own sources and marks each source as read or
+     search result only.
    - names what would settle each option outside its own reasoning, such as a query against real data or a test.
 
    It checks every claim against the code and cites `file:line`.
@@ -77,6 +85,7 @@ asks the teammate for it. It doesn't guess.
    commit it reviewed.
    - **Part 1: Changes to make.** First the changes the rules require, each citing its rule. Then your rulings,
      each with its reason. Then the changes the agent recommends, each naming the question that would change it.
+     Last, a Range list: each outside field, what it checks, its source, and the change it added.
    - **Part 2: Questions.** Numbered and grouped, with no recommendations.
 7. **Approves, if ready.** It approves only when every required change is done, no question is open, and the
    design breaks no rule. A first review rarely qualifies. Approval appends one line:
@@ -96,9 +105,10 @@ per design.
 
 1. The branch and the pushed commit, or why nothing was pushed.
 2. Whether it approved the design, and if not, what is missing.
-3. Each ruling it made, with its reason and the rule it cites.
-4. The questions waiting on the teammate.
-5. A short chat message for you to send. It names the branch, the review file, and the part to read. On approval,
+3. Each decision it kept, with its review verdict.
+4. Each ruling it made, with its reason and the rule it cites.
+5. The questions waiting on the teammate.
+6. A short chat message for you to send. It names the branch, the review file, and the part to read. On approval,
    it tells the teammate to start the feature branch from the docs branch, so the design and its review merge with
    the feature's pull request.
 
